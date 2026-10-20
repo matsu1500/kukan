@@ -1,0 +1,540 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ベクトル図示アプリ</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 16px;
+  font-family: Arial, "Noto Sans JP", sans-serif;
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.container {
+  max-width: 850px;
+  margin: auto;
+}
+
+h1 {
+  text-align: center;
+  font-size: 25px;
+  margin: 8px 0;
+}
+
+.description {
+  text-align: center;
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 18px;
+}
+
+.panel {
+  background: white;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 8px #0000000b;
+}
+
+h2 {
+  font-size: 17px;
+  margin: 0 0 12px;
+}
+
+.input-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 5px;
+}
+
+input {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 5px;
+  font-size: 17px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  text-align: center;
+  background: #fff;
+}
+
+input:focus {
+  outline: 2px solid #93c5fd;
+  border-color: #3b82f6;
+}
+
+.vector-title {
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.vector-title.blue {
+  color: #2563eb;
+}
+
+.vector-title.red {
+  color: #dc2626;
+}
+
+button {
+  border: none;
+  border-radius: 9px;
+  padding: 12px 15px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.primary {
+  background: #2563eb;
+  color: white;
+}
+
+.secondary {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.graph-panel {
+  padding: 10px;
+}
+
+.graph-header {
+  padding: 8px 8px 4px;
+  font-weight: bold;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 390px;
+  border-radius: 10px;
+  background: #ffffff;
+  touch-action: none;
+  cursor: grab;
+}
+
+canvas:active {
+  cursor: grabbing;
+}
+
+.hint {
+  text-align: center;
+  color: #64748b;
+  font-size: 13px;
+  padding: 8px 4px 2px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+  font-size: 13px;
+  padding: 10px 0 4px;
+}
+
+.legend span::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 5px;
+  border-radius: 3px;
+  vertical-align: -2px;
+  background: var(--c);
+}
+
+.result {
+  line-height: 1.9;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 500px) {
+  body {
+    padding: 8px;
+  }
+
+  h1 {
+    font-size: 21px;
+  }
+
+  .panel {
+    padding: 12px;
+  }
+
+  canvas {
+    height: 340px;
+  }
+
+  button {
+    padding: 12px 10px;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+  <h1>ベクトル図示アプリ</h1>
+  <div class="description">
+    成分を入力して、3次元ベクトルを観察しよう！
+  </div>
+
+  <div class="panel">
+    <div class="vector-title blue">ベクトル a</div>
+    <div class="input-row">
+      <div>
+        <label for="ax">x 成分</label>
+        <input id="ax" type="number" step="any" value="3">
+      </div>
+      <div>
+        <label for="ay">y 成分</label>
+        <input id="ay" type="number" step="any" value="2">
+      </div>
+      <div>
+        <label for="az">z 成分</label>
+        <input id="az" type="number" step="any" value="4">
+      </div>
+    </div>
+
+    <div class="vector-title red">ベクトル b</div>
+    <div class="input-row">
+      <div>
+        <label for="bx">x 成分</label>
+        <input id="bx" type="number" step="any" value="-2">
+      </div>
+      <div>
+        <label for="by">y 成分</label>
+        <input id="by" type="number" step="any" value="3">
+      </div>
+      <div>
+        <label for="bz">z 成分</label>
+        <input id="bz" type="number" step="any" value="2">
+      </div>
+    </div>
+
+    <div class="buttons">
+      <button class="primary" id="drawBtn">ベクトルを描画</button>
+      <button class="secondary" id="resetBtn">視点をリセット</button>
+    </div>
+  </div>
+
+  <div class="panel graph-panel">
+    <div class="graph-header">3次元ベクトルの図</div>
+    <canvas id="graph" aria-label="ドラッグで回転できる3次元ベクトル図"></canvas>
+    <div class="hint">
+      図をドラッグすると視点が回転します。スマホは指で操作できます。
+    </div>
+    <div class="legend">
+      <span style="--c:#2563eb">ベクトル a</span>
+      <span style="--c:#dc2626">ベクトル b</span>
+      <span style="--c:#64748b">座標軸</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>ベクトルの情報</h2>
+    <div class="result" id="result"></div>
+  </div>
+
+</div>
+
+<script>
+const canvas = document.getElementById("graph");
+const ctx = canvas.getContext("2d");
+
+const ids = ["ax", "ay", "az", "bx", "by", "bz"];
+
+let azimuth = -0.65;
+let elevation = 0.42;
+let scale = 1;
+let dragStart = null;
+
+function getVector(prefix) {
+  const values = ["x", "y", "z"].map(axis => {
+    const value = document.getElementById(prefix + axis).value;
+    return value.trim() === "" ? NaN : Number(value);
+  });
+
+  return values;
+}
+
+function getVectors() {
+  return {
+    a: getVector("a"),
+    b: getVector("b")
+  };
+}
+
+function validVector(v) {
+  return v.every(Number.isFinite) &&
+    v.every(n => Math.abs(n) < 1e9);
+}
+
+// 3次元座標を画面上の2次元座標に変換
+function project(point, centerX, centerY, unit) {
+  const [x, y, z] = point;
+
+  const ca = Math.cos(azimuth);
+  const sa = Math.sin(azimuth);
+  const ce = Math.cos(elevation);
+  const se = Math.sin(elevation);
+
+  // 水平方向の回転
+  const x1 = ca * x - sa * y;
+  const y1 = sa * x + ca * y;
+
+  // 上下方向の回転
+  const y2 = ce * y1 - se * z;
+  const z2 = se * y1 + ce * z;
+
+  return {
+    x: centerX + x1 * unit,
+    y: centerY - y2 * unit,
+    depth: z2
+  };
+}
+
+function line(p1, p2, color, width = 1) {
+  ctx.beginPath();
+  ctx.moveTo(p1.x, p1.y);
+  ctx.lineTo(p2.x, p2.y);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.stroke();
+}
+
+function drawArrow(start, end, color, width = 3) {
+  line(start, end, color, width);
+
+  const angle = Math.atan2(end.y - start.y, end.x - start.x);
+  const head = 10;
+
+  ctx.beginPath();
+  ctx.moveTo(end.x, end.y);
+  ctx.lineTo(
+    end.x - head * Math.cos(angle - Math.PI / 6),
+    end.y - head * Math.sin(angle - Math.PI / 6)
+  );
+  ctx.lineTo(
+    end.x - head * Math.cos(angle + Math.PI / 6),
+    end.y - head * Math.sin(angle + Math.PI / 6)
+  );
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+function drawText(text, point, color, offsetX = 7, offsetY = -7) {
+  ctx.fillStyle = color;
+  ctx.font = "bold 14px Arial, sans-serif";
+  ctx.fillText(text, point.x + offsetX, point.y + offsetY);
+}
+
+function resizeCanvas() {
+  const rect = canvas.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+  canvas.width = Math.round(rect.width * dpr);
+  canvas.height = Math.round(rect.height * dpr);
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  render();
+}
+
+function render() {
+  const width = canvas.clientWidth;
+  const height = canvas.clientHeight;
+
+  if (!width || !height) return;
+
+  ctx.clearRect(0, 0, width, height);
+
+  const { a, b } = getVectors();
+
+  if (!validVector(a) || !validVector(b)) {
+    ctx.fillStyle = "#dc2626";
+    ctx.font = "15px sans-serif";
+    ctx.fillText("すべての成分に有効な数値を入力してください。", 12, 30);
+    return;
+  }
+
+  // 座標軸の表示範囲を入力値に合わせる
+  const maxValue = Math.max(
+    3,
+    ...a.map(Math.abs),
+    ...b.map(Math.abs)
+  );
+
+  const unit = Math.min(
+    width / (2.8 * maxValue),
+    height / (2.8 * maxValue)
+  ) * scale;
+
+  const centerX = width / 2;
+  const centerY = height / 2 + 8;
+
+  const P = point => project(point, centerX, centerY, unit);
+  const origin = P([0, 0, 0]);
+
+ 
+  // 3次元の格子を描画
+  const gridRange = Math.min(10, Math.max(4, Math.ceil(maxValue)));
+  const gridColor = "#d8e0ea";
+
+  ctx.lineWidth = 1;
+
+  // xy平面（z = 0）
+  for (let i = -gridRange; i <= gridRange; i++) {
+    line(P([i, -gridRange, 0]), P([i, gridRange, 0]), gridColor);
+    line(P([-gridRange, i, 0]), P([gridRange, i, 0]), gridColor);
+  }
+
+  // xz平面（y = 0）
+  for (let i = -gridRange; i <= gridRange; i++) {
+    line(P([i, 0, -gridRange]), P([i, 0, gridRange]), gridColor);
+    line(P([-gridRange, 0, i]), P([gridRange, 0, i]), gridColor);
+  }
+
+  // yz平面（x = 0）
+  for (let i = -gridRange; i <= gridRange; i++) {
+    line(P([0, i, -gridRange]), P([0, i, gridRange]), gridColor);
+    line(P([0, -gridRange, i]), P([0, gridRange, i]), gridColor);
+  }
+
+
+  // 3本の座標軸
+  const axisLength = Math.max(4, maxValue * 1.2);
+
+  const axes = [
+    { end: [axisLength, 0, 0], label: "x", color: "#64748b" },
+    { end: [0, axisLength, 0], label: "y", color: "#64748b" },
+    { end: [0, 0, axisLength], label: "z", color: "#64748b" }
+  ];
+
+  axes.forEach(axis => {
+    const end = P(axis.end);
+    drawArrow(origin, end, axis.color, 1.6);
+    drawText(axis.label, end, axis.color, 5, -5);
+  });
+
+  drawText("O", origin, "#334155", -15, 17);
+
+  // ベクトルの描画
+  const endA = P(a);
+  const endB = P(b);
+
+  drawArrow(origin, endA, "#2563eb", 3.5);
+  drawArrow(origin, endB, "#dc2626", 3.5);
+
+  drawText("a", endA, "#2563eb");
+  drawText("b", endB, "#dc2626");
+
+  // 成分と大きさを表示
+  const length = v =>
+    Math.sqrt(v.reduce((sum, n) => sum + n * n, 0));
+
+  document.getElementById("result").innerHTML =
+    `<div style="color:#2563eb"><b>ベクトル a</b><br>` +
+    `a = (${a.map(formatNumber).join(", ")})<br>` +
+    `|a| = ${formatNumber(length(a))}</div>` +
+    `<hr style="border:0;border-top:1px solid #e2e8f0;margin:12px 0">` +
+    `<div style="color:#dc2626"><b>ベクトル b</b><br>` +
+    `b = (${b.map(formatNumber).join(", ")})<br>` +
+    `|b| = ${formatNumber(length(b))}</div>`;
+}
+
+function formatNumber(n) {
+  return Number(n.toFixed(3)).toString();
+}
+
+// 描画ボタン
+document.getElementById("drawBtn").addEventListener("click", render);
+
+// 入力変更時も自動描画
+ids.forEach(id => {
+  document.getElementById(id).addEventListener("input", render);
+});
+
+// 視点を初期状態に戻す
+document.getElementById("resetBtn").addEventListener("click", () => {
+  azimuth = -0.65;
+  elevation = 0.42;
+  scale = 1;
+  render();
+});
+
+// マウス・タッチのドラッグ操作
+canvas.addEventListener("pointerdown", event => {
+  dragStart = {
+    x: event.clientX,
+    y: event.clientY
+  };
+
+  canvas.setPointerCapture(event.pointerId);
+});
+
+canvas.addEventListener("pointermove", event => {
+  if (!dragStart) return;
+
+  const dx = event.clientX - dragStart.x;
+  const dy = event.clientY - dragStart.y;
+
+  azimuth += dx * 0.01;
+  elevation += dy * 0.01;
+
+  // 真上・真下に近づきすぎないように制限
+  elevation = Math.max(
+    -Math.PI / 2 + 0.05,
+    Math.min(Math.PI / 2 - 0.05, elevation)
+  );
+
+  dragStart = {
+    x: event.clientX,
+    y: event.clientY
+  };
+
+  render();
+});
+
+function stopDrag() {
+  dragStart = null;
+}
+
+canvas.addEventListener("pointerup", stopDrag);
+canvas.addEventListener("pointercancel", stopDrag);
+canvas.addEventListener("lostpointercapture", stopDrag);
+
+// 画面サイズ変更にも対応
+window.addEventListener("resize", resizeCanvas);
+
+resizeCanvas();
+</script>
+</body>
+</html>
